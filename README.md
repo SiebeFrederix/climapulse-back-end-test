@@ -35,3 +35,37 @@ Currently, even if the vessel is empty, users can still attempt to withdraw from
 Besides improved usability, the current code lacks maturity for real-world deployment. The simulated threads are clearly not intended for the final implementation, but we can overlook that since they serve their purpose in this context. However, other sections of the code are not of release quality, and some components are even missing altogether. Can you identify these areas and improve or refactor them accordingly?
 
 Happy debugging!
+
+## Solution Notes
+
+This section documents the changes and improvements made as part of the assignment solution.  
+The original assignment description above has been left unchanged.
+
+### Bug Fix: Concurrent Withdrawals
+
+The race condition where concurrent withdrawals only reduced the vessel content once was caused by read–modify–write logic.
+
+This was fixed by moving the withdrawal logic into a dedicated service layer and performing the operation inside a database transaction using row-level locking (`select_for_update`).  
+By locking the vessel row for the duration of the transaction, concurrent withdrawals are serialized correctly, ensuring that all updates are applied consistently.
+
+
+### Improved Usability
+
+- Withdrawals from empty vessels or with insufficient content now raise clear, user-facing validation errors instead of database exceptions.
+- Management commands accept explicit arguments (e.g. `--vessel-id`, `--amount`, `--restart`) to improve clarity and usability.
+
+### Refactoring & Architecture
+
+- Business logic was moved into a service layer to decouple it from management commands.
+- Management commands now act as thin CLI wrappers around reusable domain logic.
+- Duplicate simulation logic was simplified.
+
+### Test Coverage
+
+A minimal test suite was added to validate:
+- Successful withdrawals
+- Withdrawal validation when insufficient content is available
+
+Tests can be run using:
+
+    $ docker-compose run web python manage.py test
