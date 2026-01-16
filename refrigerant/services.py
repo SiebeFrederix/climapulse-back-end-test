@@ -4,7 +4,7 @@ from .models import Vessel
 
 
 def withdraw_from_vessel(vessel_id, amount):
-    # Use row locking to fix race condition bug
+    # Use row locking to prevent race condition
     with transaction.atomic():
         try:
             vessel = (
